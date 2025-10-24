@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Tools Hub - All-in-One AI Solutions</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                <span>AI Tools Hub</span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="nav-home">Home</a></li>
+                    <li><a href="#">Tools</a></li>
+                    <li><a href="#">Pricing</a></li>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <section class="hero">
+            <h1>All-in-One AI Tools Platform</h1>
+            
+        </section>
+
+        <section class="tools-grid" id="toolsGrid">
+            <div class="tool-card" data-tool="jpgToPdf">
+                <div class="tool-icon">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <div class="tool-content">
+                    <h3>JPG to PDF Converter</h3>
+                    <p>Convert multiple JPG images into a single PDF document with high quality and fast processing.</p>
+                </div>
+            </div>
+        <a href="pdftojpg.html" >
+             <div class="tool-card" data-tool="grammarChecker">
+                
+            <div class="tool-icon">
+                <i class="fa-solid fa-file-image"></i>
+            </div>
+            <div class="tool-content">
+                <h3>PDF to JPG Converter</h3>
+                <p>Convert Pdf to Jpg images high Resolution into a single PDF document with high quality and fast processing. </p>
+            </div>
+                
+            </div>
+
+        </a>
+        <a href="mergepdf.html" >
+             <div class="tool-card" data-tool="grammarChecker">
+                
+            <div class="tool-icon">
+                <i class="fas fa-file-pdf"></i>
+            </div>
+            <div class="tool-content">
+                <h3>Merge PDF </h3>
+                <p>Merge any PDF file high Resolution into a single PDF document with high quality and fast processing. </p>
+            </div>
+                
+            </div>
+
+        </a>
+        <a href="splitpdf.html" >
+             <div class="tool-card" data-tool="grammarChecker">
+                
+            <div class="tool-icon">
+                <i class="fas fa-file-pdf"></i>
+            </div>
+            <div class="tool-content">
+                <h3>Split PDF </h3>
+                <p>Split any PDF file with high Resolution  into a single PDF document with high quality and fast processing. </p>
+            </div>
+                
+            </div>
+
+        </a>
+
+            
+
+            
+        </section>
+
+        <!-- JPG to PDF Tool -->
+        <section class="tool-container" id="jpgToPdfTool">
+            <div class="tool-header">
+                <h2><i class="fas fa-file-pdf"></i> JPG to PDF Converter</h2>
+                <button class="back-btn" id="backFromJpgToPdf"><i class="fas fa-arrow-left"></i> Back to Tools</button>
+            </div>
+
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p class="upload-text">Drag & Drop your JPG images here</p>
+                <p>or</p>
+                <button class="btn" id="browseBtn">Browse Files</button>
+                <input type="file" id="fileInput" class="file-input" accept=".jpg,.jpeg" multiple>
+            </div>
+
+            <div class="image-preview" id="imagePreview"></div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Converting images to PDF...</p>
+            </div>
+
+            <div class="success-message" id="successMessage">
+                <p>✅ PDF created successfully! Your download will start shortly.</p>
+            </div>
+
+            <div class="controls">
+                <button class="btn" id="convertBtn" disabled>Convert to PDF</button>
+                <button class="btn" id="clearBtn" disabled>Clear All</button>
+            </div>
+        </section>
+
+        <!-- Text Summarizer Tool -->
+        
+
+        <footer>
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                <span>AI Tools Hub</span>
+            </div>
+            <div class="footer-links">
+                <a href="#">Home</a>
+                <a href="#">Tools</a>
+                <a href="#">Pricing</a>
+                <a href="#">About</a>
+                <a href="#">Contact</a>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+            </div>
+            <p class="copyright">© 2023 AI Tools Hub. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

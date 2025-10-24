@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Splitter - Split & Enhance Quality</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --border: #dee2e6;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+        
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            color: #6c757d;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title i {
+            font-size: 1.8rem;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--primary);
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+        
+        .upload-area.highlight {
+            border-color: var(--primary);
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+        }
+        
+        .btn-secondary:hover {
+            background: #5a08a0;
+        }
+        
+        .btn-success {
+            background: var(--success);
+        }
+        
+        .btn-success:hover {
+            background: #3ab3d6;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+        }
+        
+        .btn-danger:hover {
+            background: #e02175;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+        }
+        
+        .btn-warning:hover {
+            background: #e0861b;
+        }
+        
+        .btn:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .pages-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .page-thumbnail {
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .page-thumbnail:hover {
+            border-color: var(--primary);
+            transform: scale(1.03);
+        }
+        
+        .page-thumbnail.selected {
+            border-color: var(--success);
+            box-shadow: 0 0 0 2px var(--success);
+        }
+        
+        .page-number {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            text-align: center;
+            padding: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .canvas-container {
+            width: 100%;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+        }
+        
+        .page-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .file-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: var(--success);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .quality-options {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .option-group {
+            margin-bottom: 15px;
+        }
+        
+        .option-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .radio-group, .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .radio-option, .checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .slider-container {
+            margin-top: 10px;
+        }
+        
+        .slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .slider-value {
+            text-align: center;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .comparison-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .comparison-box {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .comparison-canvas {
+            max-width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .pages-container {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            
+            .action-buttons, .page-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .comparison-container {
+                flex-direction: column;
+            }
+        }
+        .back-btn {
+            display: inline-flex;
+            align-items: right;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 28px;
+            background: #fd0303;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PDF Splitter with Quality Enhancement</h1>
+            <p class="subtitle">Separate PDF pages and enhance quality with advanced processing options.</p>
+        </header>
+        
+        <div class="card">
+            <h2 class="card-title">
+                <i>📄</i> Upload PDF File
+            </h2>
+            
+
+            <div id="uploadArea" class="upload-area">
+                <div class="upload-icon">📤</div>
+                <h3>Drag & Drop your PDF here</h3>
+                <p>or click to browse files</p>
+                <input type="file" id="fileInput" accept=".pdf" class="hidden">
+            </div>
+            <a href="javascript:history.back()" class="back-btn">
+  <i class="fas fa-arrow-left"></i>
+  Go Back
+</a>
+            <div id="fileInfo" class="file-info hidden">
+                <p><strong>File:</strong> <span id="fileName"></span></p>
+                <p><strong>Size:</strong> <span id="fileSize"></span></p>
+                <p><strong>Pages:</strong> <span id="pageCount"></span></p>
+                <div class="progress-bar">
+                    <div id="progress" class="progress"></div>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button id="resetBtn" class="btn btn-danger hidden">Reset</button>
+            </div>
+        </div>
+        
+        <div id="qualityCard" class="card hidden">
+            <h2 class="card-title">
+                <i>⚙️</i> Quality Enhancement Options
+            </h2>
+            <div class="quality-options">
+                <div class="option-group">
+                    <span class="option-title">Output Quality:</span>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="quality" value="original" checked>
+                            Original Quality
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="quality" value="enhanced">
+                            Enhanced (Recommended)
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="quality" value="max">
+                            Maximum Quality
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="option-group">
+                    <span class="option-title">Image Processing:</span>
+                    <div class="checkbox-group">
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="sharpening" checked>
+                            Apply Sharpening
+                        </label>
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="noiseReduction">
+                            Noise Reduction
+                        </label>
+                        <label class="checkbox-option">
+                            <input type="checkbox" id="contrastEnhancement" checked>
+                            Contrast Enhancement
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="option-group">
+                    <span class="option-title">Resolution (DPI):</span>
+                    <div class="slider-container">
+                        <input type="range" id="dpiSlider" class="slider" min="150" max="600" value="300" step="50">
+                        <div class="slider-value">
+                            <span id="dpiValue">300</span> DPI
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="option-group">
+                    <span class="option-title">Compression:</span>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="compression" value="none" checked>
+                            No Compression
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="compression" value="medium">
+                            Medium Compression
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="compression" value="high">
+                            High Compression (Smaller Files)
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button id="previewBtn" class="btn btn-warning">Preview Quality</button>
+                <button id="applyQualityBtn" class="btn btn-success">Apply Quality Settings</button>
+            </div>
+            
+            <div id="previewContainer" class="hidden">
+                <h3>Quality Preview</h3>
+                <div class="comparison-container">
+                    <div class="comparison-box">
+                        <p>Original</p>
+                        <canvas id="originalPreview" class="comparison-canvas"></canvas>
+                    </div>
+                    <div class="comparison-box">
+                        <p>Enhanced</p>
+                        <canvas id="enhancedPreview" class="comparison-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="selectionCard" class="card hidden">
+            <h2 class="card-title">
+                <i>🔍</i> Select Pages to Split
+            </h2>
+            <p>Click on pages to select/deselect them. Selected pages will be highlighted.</p>
+            <div class="page-actions">
+                <button id="selectAllBtn" class="btn">Select All</button>
+                <button id="deselectAllBtn" class="btn">Deselect All</button>
+                <button id="selectOddBtn" class="btn">Select Odd</button>
+                <button id="selectEvenBtn" class="btn">Select Even</button>
+            </div>
+            <div id="pagesContainer" class="pages-container"></div>
+            <div class="action-buttons">
+                <button id="splitSelectedBtn" class="btn btn-success">Split Selected Pages</button>
+                <button id="splitAllBtn" class="btn btn-secondary">Split All Pages (Individual)</button>
+            </div>
+        </div>
+        
+        <div id="downloadCard" class="card hidden">
+            <h2 class="card-title">
+                <i>💾</i> Download Enhanced PDFs
+            </h2>
+            <p>Your PDF has been successfully split and enhanced. Download the high-quality files.</p>
+            <div id="downloadLinks" class="action-buttons"></div>
+            <div class="action-buttons">
+                <button id="downloadZipBtn" class="btn btn-success">Download All as ZIP</button>
+                <button id="newSplitBtn" class="btn">Split Another PDF</button>
+            </div>
+        </div>
+        
+        <footer>
+            <p>PDF Splitter with Quality Enhancement &copy; 2023 | All processing happens in your browser - your files are never uploaded to any server.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Global variables
+        let pdfDoc = null;
+        let selectedPages = new Set();
+        let totalPages = 0;
+        let pdfName = '';
+        let qualitySettings = {
+            quality: 'enhanced',
+            sharpening: true,
+            noiseReduction: false,
+            contrastEnhancement: true,
+            dpi: 300,
+            compression: 'none'
+        };
+        
+        // DOM elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const pageCount = document.getElementById('pageCount');
+        const progress = document.getElementById('progress');
+        const resetBtn = document.getElementById('resetBtn');
+        const qualityCard = document.getElementById('qualityCard');
+        const dpiSlider = document.getElementById('dpiSlider');
+        const dpiValue = document.getElementById('dpiValue');
+        const previewBtn = document.getElementById('previewBtn');
+        const applyQualityBtn = document.getElementById('applyQualityBtn');
+        const previewContainer = document.getElementById('previewContainer');
+        const originalPreview = document.getElementById('originalPreview');
+        const enhancedPreview = document.getElementById('enhancedPreview');
+        const selectionCard = document.getElementById('selectionCard');
+        const pagesContainer = document.getElementById('pagesContainer');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const deselectAllBtn = document.getElementById('deselectAllBtn');
+        const selectOddBtn = document.getElementById('selectOddBtn');
+        const selectEvenBtn = document.getElementById('selectEvenBtn');
+        const splitSelectedBtn = document.getElementById('splitSelectedBtn');
+        const splitAllBtn = document.getElementById('splitAllBtn');
+        const downloadCard = document.getElementById('downloadCard');
+        const downloadLinks = document.getElementById('downloadLinks');
+        const downloadZipBtn = document.getElementById('downloadZipBtn');
+        const newSplitBtn = document.getElementById('newSplitBtn');
+        
+        // Event listeners
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('highlight');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('highlight');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('highlight');
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        resetBtn.addEventListener('click', resetApp);
+        dpiSlider.addEventListener('input', updateDpiValue);
+        previewBtn.addEventListener('click', showQualityPreview);
+        applyQualityBtn.addEventListener('click', applyQualitySettings);
+        selectAllBtn.addEventListener('click', selectAllPages);
+        deselectAllBtn.addEventListener('click', deselectAllPages);
+        selectOddBtn.addEventListener('click', selectOddPages);
+        selectEvenBtn.addEventListener('click', selectEvenPages);
+        splitSelectedBtn.addEventListener('click', splitSelectedPages);
+        splitAllBtn.addEventListener('click', splitAllPages);
+        downloadZipBtn.addEventListener('click', downloadAsZip);
+        newSplitBtn.addEventListener('click', resetApp);
+        
+        // Functions
+        function handleFile(file) {
+            if (file.type !== 'application/pdf') {
+                alert('Please upload a PDF file.');
+                return;
+            }
+            
+            pdfName = file.name.replace('.pdf', '');
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            
+            const fileReader = new FileReader();
+            
+            fileReader.onload = function() {
+                const typedarray = new Uint8Array(this.result);
+                
+                // Initialize PDF.js
+                pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+                    pdfDoc = pdf;
+                    totalPages = pdf.numPages;
+                    pageCount.textContent = totalPages;
+                    
+                    fileInfo.classList.remove('hidden');
+                    resetBtn.classList.remove('hidden');
+                    qualityCard.classList.remove('hidden');
+                    
+                    // Update progress
+                    progress.style.width = '100%';
+                }).catch(function(error) {
+                    console.error('Error loading PDF:', error);
+                    alert('Error loading PDF. Please try another file.');
+                });
+            };
+            
+            fileReader.readAsArrayBuffer(file);
+        }
+        
+        function updateDpiValue() {
+            dpiValue.textContent = dpiSlider.value;
+            qualitySettings.dpi = parseInt(dpiSlider.value);
+        }
+        
+        function showQualityPreview() {
+            if (!pdfDoc) return;
+            
+            previewBtn.innerHTML = '<div class="loading"></div> Generating Preview...';
+            previewBtn.disabled = true;
+            
+            // Get first page for preview
+            pdfDoc.getPage(1).then(function(page) {
+                const viewport = page.getViewport({ scale: 1.5 });
+                
+                // Original preview
+                const originalCanvas = originalPreview;
+                const originalContext = originalCanvas.getContext('2d');
+                originalCanvas.height = viewport.height;
+                originalCanvas.width = viewport.width;
+                
+                // Enhanced preview
+                const enhancedCanvas = enhancedPreview;
+                const enhancedContext = enhancedCanvas.getContext('2d');
+                enhancedCanvas.height = viewport.height;
+                enhancedCanvas.width = viewport.width;
+                
+                // Render original
+                const renderContext = {
+                    canvasContext: originalContext,
+                    viewport: viewport
+                };
+                
+                page.render(renderContext).promise.then(function() {
+                    // Apply enhancements to the enhanced preview
+                    applyImageEnhancements(originalCanvas, enhancedCanvas);
+                    
+                    previewContainer.classList.remove('hidden');
+                    previewBtn.innerHTML = 'Preview Quality';
+                    previewBtn.disabled = false;
+                });
+            });
+        }
+        
+        function applyImageEnhancements(sourceCanvas, targetCanvas) {
+            const srcContext = sourceCanvas.getContext('2d');
+            const dstContext = targetCanvas.getContext('2d');
+            
+            // Copy source to destination
+            dstContext.drawImage(sourceCanvas, 0, 0);
+            
+            // Get image data
+            const imageData = dstContext.getImageData(0, 0, targetCanvas.width, targetCanvas.height);
+            const data = imageData.data;
+            
+            // Apply sharpening if enabled
+            if (qualitySettings.sharpening) {
+                applySharpening(data, targetCanvas.width, targetCanvas.height);
+            }
+            
+            // Apply contrast enhancement if enabled
+            if (qualitySettings.contrastEnhancement) {
+                applyContrastEnhancement(data);
+            }
+            
+            // Apply noise reduction if enabled
+            if (qualitySettings.noiseReduction) {
+                applyNoiseReduction(data, targetCanvas.width, targetCanvas.height);
+            }
+            
+            // Put enhanced image data back
+            dstContext.putImageData(imageData, 0, 0);
+        }
+        
+        function applySharpening(data, width, height) {
+            // Simple sharpening kernel
+            const kernel = [
+                0, -1, 0,
+                -1, 5, -1,
+                0, -1, 0
+            ];
+            
+            applyConvolutionFilter(data, width, height, kernel);
+        }
+        
+        function applyNoiseReduction(data, width, height) {
+            // Simple median filter for noise reduction
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    const idx = (y * width + x) * 4;
+                    
+                    // Get surrounding pixels
+                    const r = [], g = [], b = [];
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const kidx = ((y + ky) * width + (x + kx)) * 4;
+                            r.push(data[kidx]);
+                            g.push(data[kidx + 1]);
+                            b.push(data[kidx + 2]);
+                        }
+                    }
+                    
+                    // Sort and take median
+                    r.sort((a, b) => a - b);
+                    g.sort((a, b) => a - b);
+                    b.sort((a, b) => a - b);
+                    
+                    data[idx] = r[4];     // Median of 9 values
+                    data[idx + 1] = g[4];
+                    data[idx + 2] = b[4];
+                }
+            }
+        }
+        
+        function applyContrastEnhancement(data) {
+            // Simple contrast enhancement
+            const factor = 1.2; // Increase contrast by 20%
+            
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = clamp(data[i] * factor, 0, 255);         // R
+                data[i + 1] = clamp(data[i + 1] * factor, 0, 255); // G
+                data[i + 2] = clamp(data[i + 2] * factor, 0, 255); // B
+            }
+        }
+        
+        function applyConvolutionFilter(data, width, height, kernel) {
+            const tempData = new Uint8ClampedArray(data);
+            
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    let r = 0, g = 0, b = 0;
+                    
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const kidx = ((y + ky) * width + (x + kx)) * 4;
+                            const kval = kernel[(ky + 1) * 3 + (kx + 1)];
+                            
+                            r += tempData[kidx] * kval;
+                            g += tempData[kidx + 1] * kval;
+                            b += tempData[kidx + 2] * kval;
+                        }
+                    }
+                    
+                    const idx = (y * width + x) * 4;
+                    data[idx] = clamp(r, 0, 255);
+                    data[idx + 1] = clamp(g, 0, 255);
+                    data[idx + 2] = clamp(b, 0, 255);
+                }
+            }
+        }
+        
+        function clamp(value, min, max) {
+            return Math.min(Math.max(value, min), max);
+        }
+        
+        function applyQualitySettings() {
+            // Update quality settings from form
+            qualitySettings.quality = document.querySelector('input[name="quality"]:checked').value;
+            qualitySettings.sharpening = document.getElementById('sharpening').checked;
+            qualitySettings.noiseReduction = document.getElementById('noiseReduction').checked;
+            qualitySettings.contrastEnhancement = document.getElementById('contrastEnhancement').checked;
+            qualitySettings.compression = document.querySelector('input[name="compression"]:checked').value;
+            
+            // Show selection card
+            qualityCard.classList.add('hidden');
+            selectionCard.classList.remove('hidden');
+            
+            renderPageThumbnails();
+        }
+        
+        function renderPageThumbnails() {
+            pagesContainer.innerHTML = '';
+            selectedPages.clear();
+            
+            for (let i = 1; i <= totalPages; i++) {
+                const pageThumbnail = document.createElement('div');
+                pageThumbnail.className = 'page-thumbnail';
+                pageThumbnail.dataset.pageNumber = i;
+                
+                const canvasContainer = document.createElement('div');
+                canvasContainer.className = 'canvas-container';
+                
+                const pageNumber = document.createElement('div');
+                pageNumber.className = 'page-number';
+                pageNumber.textContent = `Page ${i}`;
+                
+                pageThumbnail.appendChild(canvasContainer);
+                pageThumbnail.appendChild(pageNumber);
+                
+                pageThumbnail.addEventListener('click', () => togglePageSelection(i, pageThumbnail));
+                
+                pagesContainer.appendChild(pageThumbnail);
+                
+                // Render thumbnail
+                renderThumbnail(i, canvasContainer);
+            }
+            
+            updateSplitButtonState();
+        }
+        
+        function renderThumbnail(pageNumber, container) {
+            pdfDoc.getPage(pageNumber).then(function(page) {
+                const viewport = page.getViewport({ scale: 0.2 });
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                container.appendChild(canvas);
+                
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                
+                page.render(renderContext);
+            });
+        }
+        
+        function togglePageSelection(pageNumber, element) {
+            if (selectedPages.has(pageNumber)) {
+                selectedPages.delete(pageNumber);
+                element.classList.remove('selected');
+            } else {
+                selectedPages.add(pageNumber);
+                element.classList.add('selected');
+            }
+            
+            updateSplitButtonState();
+        }
+        
+        function selectAllPages() {
+            selectedPages.clear();
+            const thumbnails = document.querySelectorAll('.page-thumbnail');
+            
+            for (let i = 1; i <= totalPages; i++) {
+                selectedPages.add(i);
+                thumbnails[i-1].classList.add('selected');
+            }
+            
+            updateSplitButtonState();
+        }
+        
+        function deselectAllPages() {
+            selectedPages.clear();
+            const thumbnails = document.querySelectorAll('.page-thumbnail');
+            
+            thumbnails.forEach(thumb => {
+                thumb.classList.remove('selected');
+            });
+            
+            updateSplitButtonState();
+        }
+        
+        function selectOddPages() {
+            selectedPages.clear();
+            const thumbnails = document.querySelectorAll('.page-thumbnail');
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (i % 2 !== 0) {
+                    selectedPages.add(i);
+                    thumbnails[i-1].classList.add('selected');
+                } else {
+                    thumbnails[i-1].classList.remove('selected');
+                }
+            }
+            
+            updateSplitButtonState();
+        }
+        
+        function selectEvenPages() {
+            selectedPages.clear();
+            const thumbnails = document.querySelectorAll('.page-thumbnail');
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (i % 2 === 0) {
+                    selectedPages.add(i);
+                    thumbnails[i-1].classList.add('selected');
+                } else {
+                    thumbnails[i-1].classList.remove('selected');
+                }
+            }
+            
+            updateSplitButtonState();
+        }
+        
+        function updateSplitButtonState() {
+            splitSelectedBtn.disabled = selectedPages.size === 0;
+        }
+        
+        async function splitSelectedPages() {
+            if (selectedPages.size === 0) return;
+            
+            splitSelectedBtn.innerHTML = '<div class="loading"></div> Processing...';
+            splitSelectedBtn.disabled = true;
+            
+            try {
+                const pdfBytes = await extractSelectedPages();
+                showDownloadOptions(pdfBytes, Array.from(selectedPages));
+            } catch (error) {
+                console.error('Error splitting PDF:', error);
+                alert('Error splitting PDF. Please try again.');
+            } finally {
+                splitSelectedBtn.innerHTML = 'Split Selected Pages';
+                splitSelectedBtn.disabled = false;
+            }
+        }
+        
+        async function splitAllPages() {
+            splitAllBtn.innerHTML = '<div class="loading"></div> Processing...';
+            splitAllBtn.disabled = true;
+            
+            try {
+                const allPages = Array.from({length: totalPages}, (_, i) => i + 1);
+                const pdfBytes = await extractSelectedPages(allPages);
+                showDownloadOptions(pdfBytes, allPages);
+            } catch (error) {
+                console.error('Error splitting PDF:', error);
+                alert('Error splitting PDF. Please try again.');
+            } finally {
+                splitAllBtn.innerHTML = 'Split All Pages (Individual)';
+                splitAllBtn.disabled = false;
+            }
+        }
+        
+        async function extractSelectedPages(pages = null) {
+            const pagesToExtract = pages || Array.from(selectedPages);
+            const { PDFDocument } = PDFLib;
+            
+            // Create a new PDF document
+            const newPdfDoc = await PDFDocument.create();
+            
+            // Copy selected pages from the original PDF with quality enhancements
+            for (const pageNum of pagesToExtract) {
+                // Get the page
+                const page = await pdfDoc.getPage(pageNum);
+                
+                // Calculate scale based on DPI setting
+                const scale = qualitySettings.dpi / 72; // 72 is standard PDF DPI
+                const viewport = page.getViewport({ scale: scale });
+                
+                // Create a canvas to render the page
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+                
+                // Apply image enhancements if enabled
+                if (qualitySettings.quality !== 'original') {
+                    applyImageEnhancements(canvas, canvas);
+                }
+                
+                // Convert canvas to image and embed in new PDF
+                let imageData, image;
+                
+                // Adjust quality based on compression setting
+                let quality = 1.0; // Maximum quality
+                if (qualitySettings.compression === 'medium') {
+                    quality = 0.8;
+                } else if (qualitySettings.compression === 'high') {
+                    quality = 0.6;
+                }
+                
+                if (quality < 1.0) {
+                    // Use JPEG for compression
+                    imageData = canvas.toDataURL('image/jpeg', quality);
+                    image = await newPdfDoc.embedJpg(imageData);
+                } else {
+                    // Use PNG for lossless quality
+                    imageData = canvas.toDataURL('image/png');
+                    image = await newPdfDoc.embedPng(imageData);
+                }
+                
+                const imageDims = image.scale(1);
+                
+                const newPage = newPdfDoc.addPage([imageDims.width, imageDims.height]);
+                newPage.drawImage(image, {
+                    x: 0,
+                    y: 0,
+                    width: imageDims.width,
+                    height: imageDims.height,
+                });
+            }
+            
+            // Save the new PDF
+            const pdfBytes = await newPdfDoc.save();
+            return pdfBytes;
+        }
+        
+        function showDownloadOptions(pdfBytes, pages) {
+            selectionCard.classList.add('hidden');
+            downloadCard.classList.remove('hidden');
+            downloadLinks.innerHTML = '';
+            
+            // Create download links for each page
+            if (pages.length > 1) {
+                // For multiple pages, create a single download for all selected
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${pdfName}_pages_${pages.join('_')}_enhanced.pdf`;
+                link.className = 'btn';
+                link.textContent = `Download Enhanced PDF (${pages.length} pages)`;
+                
+                downloadLinks.appendChild(link);
+            } else {
+                // For single page, create a simple download
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${pdfName}_page_${pages[0]}_enhanced.pdf`;
+                link.className = 'btn';
+                link.textContent = `Download Enhanced Page ${pages[0]}`;
+                
+                downloadLinks.appendChild(link);
+            }
+        }
+        
+        function downloadAsZip() {
+            // In a real implementation, you would use a library like JSZip
+            // to create a ZIP file containing all the split PDFs
+            alert('ZIP download functionality would be implemented with a library like JSZip in a production environment.');
+        }
+        
+        function resetApp() {
+            pdfDoc = null;
+            selectedPages.clear();
+            totalPages = 0;
+            pdfName = '';
+            
+            fileInput.value = '';
+            fileInfo.classList.add('hidden');
+            resetBtn.classList.add('hidden');
+            qualityCard.classList.add('hidden');
+            selectionCard.classList.add('hidden');
+            downloadCard.classList.add('hidden');
+            previewContainer.classList.add('hidden');
+            
+            progress.style.width = '0%';
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html>

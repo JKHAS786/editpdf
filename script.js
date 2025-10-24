@@ -170,5 +170,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 500);
     }
 
-    
+      // Update timestamp
+        function updateTime() {
+            document.getElementById('timestamp').textContent = new Date().toLocaleTimeString();
+        }
+        
+        // Refresh the entire page every second
+        setTimeout(function() {
+            location.reload();
+        }, 1000);
+        
+        updateTime();
+
 });
